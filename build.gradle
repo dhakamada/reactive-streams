@@ -26,4 +26,7 @@ dependencies {
     testCompile "junit:junit:4.12"
     testCompile "io.projectreactor:reactor-test:3.1.2.RELEASE"
     testCompile "io.projectreactor:reactor-test:3.1.2.RELEASE"
+    testCompile "org.assertj:assertj-core:3.8.0"
+    testCompile "org.assertj:assertj-core-java8:1.0.0m1"
+    testCompile "org.mockito:mockito-all:1.9.5"
 }
