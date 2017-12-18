@@ -1,5 +1,8 @@
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +43,7 @@ public class PublishersTest {
 
         final String wordArray = "A B C";
         final Flux<String> fluxArray = Flux.fromArray(wordArray.split(" "));
-        StepVerifier.create(fluxArray).expectNext("A","B","C").verifyComplete();
+        StepVerifier.create(fluxArray).expectNext("A", "B", "C").verifyComplete();
 
         final Flux<String> fluxInterable = Flux.fromIterable(Arrays.asList("Jose, Patricia"));
         StepVerifier.create(fluxInterable).expectNext("Jose", "Patricia").verifyComplete();
@@ -77,24 +80,39 @@ public class PublishersTest {
         StepVerifier.create(mapWithDelay).expectNext("Reactive Programming", "Spring Reactor").verifyComplete();
     }
 
+    /**
+     * merge can interleave the outputs,
+     * while concat will first wait for earlier streams to finish before processing later streams
+     */
     @Test
-    public void merge() {
+    public void mergeAndConcat() {
 
-        final Flux<Long> delay = Flux.interval(Duration.ofMillis(5));
-        final Flux<String> numbersWithDelay = Flux.just("1", "2").zipWith(delay, (s, l) -> s);
-        final Flux<String> numbers = Flux.just("3", "4");
-        final Flux<String> numbers1 = Flux.just("5", "6");
-        final Flux<String> numbers2 = Flux.just("7","8","9","10","11","12","13","14","15","16");
+        final Flux<String> numbers1 = Flux.just("7", "8", "9");
+        final Flux<String> numbers2 = Flux.just("1", "2", "3", "4", "5", "6");
 
         final Flux<String> eventMerge = numbers2.mergeWith(numbers1);
-        StepVerifier.create(eventMerge).expectNext("7","8","9","10","11","12","13","14","15","16").verifyComplete();
+        StepVerifier.create(eventMerge).expectNext("1", "2", "3", "4", "5", "6", "7", "8", "9").verifyComplete();
 
-        final Flux<String> mergeWithDelaFlux = numbersWithDelay.mergeWith(numbers);
-        StepVerifier.create(mergeWithDelaFlux).expectNext("3", "4", "1", "2").verifyComplete();
+        final Flux<Long> delay = Flux.interval(Duration.ofSeconds(1));
+        final Flux<String> numbersWithDelay = Flux.just("1", "2", "3", "4").zipWith(delay, (s, l) -> s);
+        final Flux<String> numbersWithDelay1 = Flux.just("5", "6", "7", "8").zipWith(delay, (s, l) -> s);
 
+        final Flux<String> mergeWithDelaFlux = numbersWithDelay.mergeWith(numbersWithDelay1);
+//        StepVerifier.create(mergeWithDelaFlux).expectNext("1", "5", "2", "6", "3", "7", "4", "8").verifyComplete();
+//         or
+//        StepVerifier.create(mergeWithDelaFlux).expectNext("5","1", "6", "2", "7", "3", "8", "4").verifyComplete();
 
+        final Flux<String> concatWithDelayFlux = numbersWithDelay.concatWith(numbersWithDelay1);
+        StepVerifier.create(concatWithDelayFlux).expectNext("1", "2", "3", "4", "5", "6", "7", "8");
+    }
 
-//        Flux<String> nonInterleavedFlux = alphabetsWithDelay.concatWith(alphabetsWithoutDelay);
-//        StepVerifier.create(nonInterleavedFlux).expectNext("A", "B", "C", "D").verifyComplete();
+    @Test
+    public void block() {
+        final String name = Mono.just("Diego").block();
+        assertThat(name).isEqualTo("Diego");
+
+        final Iterator<String> iterator = Flux.just( "Test", "Block").toIterable().iterator();
+        assertThat(iterator.next()).isEqualTo("Test");
+        assertThat(iterator.next()).isEqualTo("Block");
     }
 }
