@@ -122,4 +122,11 @@ public class PublishersTest {
         StepVerifier.create(monoError).expectErrorMessage("NPE").verify();
         StepVerifier.create(monoError).expectError(NullPointerException.class).verify();
     }
+
+    @Test
+    public void counter() {
+        final Flux<Long> counterFlux = Flux.interval(Duration.ofMillis(100)).take(5);
+        counterFlux.subscribe(System.out::println);
+        StepVerifier.create(counterFlux).expectNext(0L, 1L,2L,3L,4L).verifyComplete();
+    }
 }
