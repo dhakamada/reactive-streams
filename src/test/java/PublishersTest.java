@@ -115,4 +115,11 @@ public class PublishersTest {
         assertThat(iterator.next()).isEqualTo("Test");
         assertThat(iterator.next()).isEqualTo("Block");
     }
+
+    @Test
+    public void error() {
+        final Mono<String> monoError = Mono.error(new NullPointerException("NPE"));
+        StepVerifier.create(monoError).expectErrorMessage("NPE").verify();
+        StepVerifier.create(monoError).expectError(NullPointerException.class).verify();
+    }
 }
